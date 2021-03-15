@@ -10,6 +10,7 @@ const generateCard = require('../../cardGenerator/generateCard')
 // Load input validation
 const validateRegisterInput = require("../../validation/register");
 const validateLoginInput = require("../../validation/login");
+const UpdatePassword = require('../../validation/updatePassword')
 
 // Load User model
 const User = require("../../models/User");
@@ -29,41 +30,49 @@ router.post("/register", (req, res) => {
     return res.status(400).json(errors);
   }
 
+  User.findOne({phone: req.body.phone}, (err, user) => {
+    if (err) throw err
+    if(user){return res.send({
+      error : `${req.body.phone} already registered`
+    })}
+  })
+
   User.findOne({ email: req.body.email }).then((user) => {
     if (user) {
-      return res.status(400).json({ email: "Email already exists" });
+      return res.status(400).json({ error: `${req.body.email} already registered` });
     } else {
-      RegisterMail(req.body.email)
-      return res.send("hello")
-      // const newUser = new User({
-      //   name: req.body.name,
-      //   email: req.body.email,
-      //   password: req.body.password
-      // });
+      const newUser = new User({
+        name: req.body.name,
+        email: req.body.email,
+        password: req.body.password,
+        phone: req.body.phone,
+        account : `91${req.body.phone}`,
+        transactionPassword: bcrypt.hashSync(req.body.transactionPassword, 10)
+      });
 
-      // // Hash password before saving in database
-      // bcrypt.genSalt(10, (err, salt) => {
-      //   bcrypt.hash(newUser.password, salt, (err, hash) => {
-      //     if (err) throw err;
-      //     newUser.password = hash;
-      //     newUser
-      //       .save()
-      //       .then((user) => {
-      //         res.json(user);
-      //         RegisterMail(req.body.email)
-      //         Cards.create({
-      //           email: req.body.email,
-      //           debit: [
-      //             generateCard(req.body.name, 'Regular Debit Card')
-      //           ],
-      //           credit: []
-      //         }, (err, cards) => {
-        
-      //         })
-      //       })
-      //       .catch((err) => console.log(err));
-      //   });
-      // });
+      // Hash password before saving in database
+      bcrypt.genSalt(10, (err, salt) => {
+        bcrypt.hash(newUser.password, salt, (err, hash) => {
+          if (err) throw err;
+          newUser.password = hash;
+          newUser
+            .save()
+            .then((user) => {
+              res.json(user);
+              RegisterMail(req.body.email, newUser.account)
+              Cards.create({
+                email: req.body.email,
+                debit: [
+                  generateCard(req.body.name, 'Regular Debit Card')
+                ],
+                credit: []
+              }, (err, cards) => {
+                  if(err) throw err
+              })
+            })
+            .catch((err) => console.log(err));
+        });
+      });
 
     }
   });
@@ -139,4 +148,32 @@ router.get("/userInfo", (req, res) => {
     });
   });
 });
+
+
+//update password
+router.put('/updatePassword', (req, res) => {
+  let token = req.headers['x-access-token']
+  if(!token) return res.status(500).send({auth : false,error : "No token provided"})
+  jwt.verify(token,keys.secretOrKey, (err, data) => {
+      if(err) return res.status(500).send({auth : false,error : "Invalid Token"})
+      const { errors, isValid } = UpdatePassword(req.body);
+      if (!isValid) {
+        return res.status(400).json(errors);
+      }
+      User.findById(data.id,(err, result) => {
+        if(err) throw err
+        bcrypt.compare(req.body.password, result.password).then((isMatch) => {
+          if(isMatch){
+            let hash = bcrypt.hashSync(req.body.newpassword)
+            User.updateOne({_id : data.id}, {password : hash}, (err, result) => {
+            if (err) throw err
+            return res.send({message: 'password updated'})
+        })
+          }else{
+            return res.send({error: "Old password is incorrect"})
+          }
+        })
+      })
+  })
+})
 module.exports = router;

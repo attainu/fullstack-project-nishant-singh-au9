@@ -8,6 +8,9 @@ router.get('/cardshealth', (req, res) => {
     return res.send('cards route is working properly')
 })
 
+//load card model
+const Cards = require('../../models/Cards')
+
 
 //get debit cards
 router.get('/getdebitcard', (req, res) => {

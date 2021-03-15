@@ -20,8 +20,20 @@ const UserSchema = new Schema({
     default: Date.now
   },
   balance: {
-    type: Object,
-    default: '0'
+    type: Number,
+    default: 0.00
+  },
+  phone: {
+    type: String,
+    required : true
+  },
+  account: {
+    type: String,
+    required : true
+  },
+  transactionPassword : {
+    type: String,
+    required: true
   }
 
 });
