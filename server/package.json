@@ -25,4 +25,5 @@
     "validator": "^10.9.0"
   },
   "proxy": "http://localhost:5000"
+
 }
