@@ -16,6 +16,10 @@ const UpdatePassword = require('../../validation/updatePassword')
 const User = require("../../models/User");
 //Load Cards Model
 const Cards = require('../../models/Cards')
+//Load address model
+const Address = require('../../models/Address')
+//Load checque model
+const Cheque = require('../../models/Cheques')
 
 // @route POST api/users/register
 // @desc Register user
@@ -34,48 +38,69 @@ router.post("/register", (req, res) => {
     if (err) throw err
     if(user){return res.send({
       error : `${req.body.phone} already registered`
-    })}
-  })
-
-  User.findOne({ email: req.body.email }).then((user) => {
-    if (user) {
-      return res.status(400).json({ error: `${req.body.email} already registered` });
-    } else {
-      const newUser = new User({
-        name: req.body.name,
-        email: req.body.email,
-        password: req.body.password,
-        phone: req.body.phone,
-        account : `91${req.body.phone}`,
-        transactionPassword: bcrypt.hashSync(req.body.transactionPassword, 10)
+    })}else{
+      User.findOne({ email: req.body.email }).then((user) => {
+        if (user) {
+          return res.status(400).json({ error: `${req.body.email} already registered` });
+        } else {
+          const newUser = new User({
+            name: req.body.name,
+            email: req.body.email,
+            password: req.body.password,
+            phone: req.body.phone,
+            account : `91${req.body.phone}`,
+            transactionPassword: bcrypt.hashSync(req.body.transactionPassword, 10)
+          });
+    
+          // Hash password before saving in database
+          bcrypt.genSalt(10, (err, salt) => {
+            bcrypt.hash(newUser.password, salt, (err, hash) => {
+              if (err) throw err;
+              newUser.password = hash;
+              newUser
+                .save()
+                .then((user) => {
+                  res.json(user);
+                  const debitcarddetails = generateCard(req.body.name, 'Regular Debit Card', req.body.email, 'Debit')
+                  Cards.create({
+                    email: req.body.email,
+                    debit: [
+                      debitcarddetails
+                    ],
+                    credit: []
+                  }, (err, cards) => {
+                      if(err) throw err
+                        let add = {
+                        email : req.body.email,
+                        pincode : req.body.pincode,
+                        city: req.body.city,
+                        state: req.body.state,
+                        fulladdress: req.body.fulladdress
+                      }
+    
+                      Address.create(add, (err, createdAddress) => {
+                        RegisterMail(req.body.email, newUser.account)
+                      })
+    
+                      let year = new Date().getFullYear().toString()
+                      let date = new Date()
+                      let orders = {}
+                      orders[year] = [date]
+                      Cheque.create({
+                        email: req.body.email,
+                        orders
+                      }, (err, chq) => {
+                        if(err) throw err
+                      })
+                  })
+                })
+                .catch((err) => console.log(err));
+            });
+          });
+        }
       });
-
-      // Hash password before saving in database
-      bcrypt.genSalt(10, (err, salt) => {
-        bcrypt.hash(newUser.password, salt, (err, hash) => {
-          if (err) throw err;
-          newUser.password = hash;
-          newUser
-            .save()
-            .then((user) => {
-              res.json(user);
-              RegisterMail(req.body.email, newUser.account)
-              Cards.create({
-                email: req.body.email,
-                debit: [
-                  generateCard(req.body.name, 'Regular Debit Card')
-                ],
-                credit: []
-              }, (err, cards) => {
-                  if(err) throw err
-              })
-            })
-            .catch((err) => console.log(err));
-        });
-      });
-
     }
-  });
+  })
 });
 
 // @route POST api/users/login
