@@ -1,0 +1,56 @@
+.registerBank {
+  width: 100%;
+  height: auto;
+}
+
+.registerimage {
+  position: relative;
+  text-align: center;
+  color: white;
+}
+
+.centered {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.outerform {
+  background-color: yellow;
+  padding: 20px 40px;
+}
+
+.mainform {
+  width: 100%;
+}
+
+.registerInput {
+  width: 100%;
+  margin-bottom: 10px;
+  border: 2px solid black;
+  border-top-style: hidden;
+  border-right-style: hidden;
+  border-left-style: hidden;
+  border-bottom-style: groove;
+  background-color: yellow;
+  outline: none;
+}
+
+.registertitle {
+  color: white;
+  margin-bottom: 30px;
+  margin-top: 0;
+}
+
+.registerp {
+  margin: 0;
+  padding: 0;
+  font-weight: bold;
+}
+
+.successimg {
+  width: 100%;
+  height: auto;
+  max-width: 250px;
+}

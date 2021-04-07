@@ -1,0 +1,10 @@
+.stay {
+  background-color: yellow;
+  padding: 50px;
+}
+
+.logodiv {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

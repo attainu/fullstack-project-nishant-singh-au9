@@ -1,0 +1,12 @@
+.homefootercol {
+  padding: 50px;
+  align-items: center;
+}
+
+.sociallinks {
+  padding: 10px;
+}
+
+html {
+  scroll-behavior: smooth;
+}
