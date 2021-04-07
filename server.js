@@ -6,16 +6,23 @@ const passport = require("passport");
 const users = require("./routes/api/users");
 const cards = require('./routes/api/cards')
 const transactions = require('./routes/api/transactions')
+const cors = require('cors')
 
 const app = express();
+app.use(cors())
 
 // Bodyparser middleware
 app.use(
-  bodyParser.urlencoded({
+  express.urlencoded({
     extended: false
   })
 );
-app.use(bodyParser.json());
+app.use(express.json());
+
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*')
+  next()
+})
 
 // DB Config
 const db = require("./config/keys").mongoURI;
